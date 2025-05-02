@@ -29,6 +29,7 @@ include_directories(${CMAKE_SOURCE_DIR}/libs) # Adiciona o diretório 'libs' à 
 
 add_executable(${PROJECT_NAME}  
         ATIVIDADE-03.c # Código principal em C
+        libs/ssd1306.c
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})  # Adiciona o diretório raiz como include privado apenas para o target atual
@@ -37,7 +38,8 @@ target_link_libraries(${PROJECT_NAME}
         pico_stdlib
         FreeRTOS-Kernel 
         FreeRTOS-Kernel-Heap4
-        hardware_gpio 
+        hardware_gpio
+        hardware_i2c 
         )
 
 pico_enable_stdio_usb(${PROJECT_NAME} 1)

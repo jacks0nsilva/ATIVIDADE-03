@@ -3,29 +3,100 @@
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
+#include "libs/ssd1306.h"
 #include "hardware/gpio.h"
+#include "hardware/i2c.h"
+#include "libs/definicoes.h"
 
-void vBlinkLedTask()
+bool noturne_mode = false; 
+ssd1306_t ssd;
+
+void vLedRGBTask()
 {
+    gpio_init(LED_GREEN);
+    gpio_set_dir(LED_GREEN, GPIO_OUT);
+    gpio_init(LED_RED);
+    gpio_set_dir(LED_RED, GPIO_OUT);
+    gpio_init(LED_BLUE);
+    gpio_set_dir(LED_BLUE, GPIO_OUT);
+    
     while(true)
     {
-        gpio_put(11, true);
-        vTaskDelay(pdMS_TO_TICKS(500)); // Delay for 500 ms
-        gpio_put(11, false);
-        vTaskDelay(pdMS_TO_TICKS(500)); // Delay for 500 ms
+        // Se o modo noturno estivar desativado, o semáforo vai operar normalmente
+        if(!noturne_mode){
+            gpio_put(LED_RED, 0); // Apaga o LED vermelho
+            gpio_put(LED_GREEN, 1); // Acendo o LED verde por 3 segundos
+            vTaskDelay(pdMS_TO_TICKS(TIME_GREEN));
+            
+            // Cor amarelo
+            gpio_put(LED_RED, 1); // 
+            vTaskDelay(pdMS_TO_TICKS(TIME_YELLOW)); // Acende o amarelo por 2 segundos
+            gpio_put(LED_GREEN, 0); // Apaga o LED verde
+            gpio_put(LED_RED, 0); // Apaga o LED vermelho
+
+            // Cor vermelho
+            gpio_put(LED_RED, 1); // Acende o LED vermelho por 3 segundos
+            vTaskDelay(pdMS_TO_TICKS(TIME_RED)); // Acende o vermelho por 3 segundos
+            gpio_put(LED_RED, 0); // Apaga o LED vermelho
+        }
+        else{
+
+            gpio_put(LED_RED, 1); 
+            gpio_put(LED_GREEN, 1);
+            vTaskDelay(pdMS_TO_TICKS(3000)); // Acende o vermelho e verde por 3 segundos
+            gpio_put(LED_RED, 0); // Apaga o LED vermelho
+            gpio_put(LED_GREEN, 0); // Apaga o LED 
+            vTaskDelay(pdMS_TO_TICKS(3000));
+        }
     }
 }
 
-void vBlinkLedTask2()
+void vDisplayTask()
+{
+    i2c_init(I2C_PORT, 400 * 1000);
+
+    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
+    gpio_pull_up(I2C_SDA);
+    gpio_pull_up(I2C_SCL);
+
+    ssd1306_init(&ssd, WIDTH, HEIGHT, false, ADRESS, I2C_PORT);
+    ssd1306_config(&ssd);
+    ssd1306_send_data(&ssd);
+
+    ssd1306_fill(&ssd, false); // Limpa o display
+    ssd1306_send_data(&ssd);
+    bool cor = true;
+    while (true)
+    {
+        
+        if(!noturne_mode){
+            ssd1306_fill(&ssd, !cor);                          // Limpa o display
+            ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);      // Desenha um retângulo
+            ssd1306_draw_string(&ssd,"EM FRENTE",8,8);
+            ssd1306_send_data(&ssd); // Envia os dados para o 
+            
+            vTaskDelay(pdMS_TO_TICKS(TIME_GREEN));
+            ssd1306_fill(&ssd, !cor);                          // Limpa o display
+            ssd1306_draw_string(&ssd,"ATENCAO",8,8);
+            ssd1306_send_data(&ssd); // Envia os dados para o display
+
+            vTaskDelay(pdMS_TO_TICKS(TIME_YELLOW));
+            ssd1306_fill(&ssd, !cor);                          // Limpa o display
+            ssd1306_draw_string(&ssd, "PARE", 8,8);
+            ssd1306_send_data(&ssd); // Envia os dados para o display
+            vTaskDelay(pdMS_TO_TICKS(TIME_RED));
+        } else{
+            ssd1306_draw_string(&ssd, "NOTURNO", 8, 8);
+        }
+            
+    }
+    
+}
+
+void vMatrizTask()
 {
 
-    while(true)
-    {
-        gpio_put(12, true);
-        vTaskDelay(pdMS_TO_TICKS(1000)); // Delay for 1000 ms
-        gpio_put(12, false);
-        vTaskDelay(pdMS_TO_TICKS(750)); // Delay for 750 ms
-    }
 }
 
 
@@ -34,7 +105,13 @@ void vBlinkLedTask2()
 #define botaoB 6
 void gpio_irq_handler(uint gpio, uint32_t events)
 {
-    reset_usb_boot(0, 0);
+    if(gpio == 5){
+        noturne_mode = !noturne_mode;
+    }
+    else if(gpio == botaoB){
+        reset_usb_boot(0, 0);
+    }
+    
 }
 
 
@@ -46,19 +123,17 @@ int main()
     gpio_init(botaoB);
     gpio_set_dir(botaoB, GPIO_IN);
     gpio_pull_up(botaoB);
+
+    gpio_init(5);
+    gpio_set_dir(5, GPIO_IN);
+    gpio_pull_up(5);
+
+    gpio_set_irq_enabled_with_callback(5, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(botaoB, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     // Fim do trecho para modo BOOTSEL com botão B
 
-    gpio_init(11);
-    gpio_set_dir(11, GPIO_OUT);
-
-    gpio_init(12);
-    gpio_set_dir(12, GPIO_OUT);
-
-    xTaskCreate(vBlinkLedTask, "Blink Led Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
-    
-    xTaskCreate(vBlinkLedTask2, "Blink Led Task 2", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
-
+    xTaskCreate(vLedRGBTask, "LED RGB Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(vDisplayTask, "Display Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
     vTaskStartScheduler();
     panic_unsupported();
 }
