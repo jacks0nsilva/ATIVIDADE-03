@@ -4,6 +4,7 @@
 #define LED_GREEN 11
 #define LED_BLUE 12
 #define LED_RED 13
+#define MATRIZ_LEDS 7 
 #define I2C_PORT i2c1
 #define I2C_SDA 14
 #define I2C_SCL 15

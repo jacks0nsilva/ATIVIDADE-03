@@ -7,6 +7,7 @@
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
 #include "libs/definicoes.h"
+#include "libs/pio_config.h"
 
 bool noturne_mode = false; 
 ssd1306_t ssd;
@@ -96,7 +97,34 @@ void vDisplayTask()
 
 void vMatrizTask()
 {
+    np_init(MATRIZ_LEDS);
+    np_clear();
 
+    bool matriz[25] = {    
+    0, 0, 0, 0, 0, 
+    0, 1, 1, 1, 0, 
+    0, 1, 1, 1, 0, 
+    0, 1, 1, 1, 0, 
+    0, 0, 0, 0, 0
+};
+
+    while (true)
+    {
+        if(!noturne_mode){
+            np_set_leds(matriz, 0, 50, 0); // Verde
+            vTaskDelay(pdMS_TO_TICKS(TIME_GREEN));
+
+            np_set_leds(matriz, 50, 50, 0); // Amarelo
+            vTaskDelay(pdMS_TO_TICKS(TIME_YELLOW));
+
+            np_set_leds(matriz, 50, 0, 0); // Vermelho
+            vTaskDelay(pdMS_TO_TICKS(TIME_RED));
+        } else {
+            np_set_leds(matriz, 50, 50, 0); // Amarelo
+            vTaskDelay(pdMS_TO_TICKS(3000)); // Acende o amarelo por 3 segundos
+            np_set_leds(matriz, 0, 0, 0); // Apaga os LEDs
+        }
+    }
 }
 
 
@@ -132,6 +160,7 @@ int main()
     gpio_set_irq_enabled_with_callback(botaoB, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     // Fim do trecho para modo BOOTSEL com botão B
 
+    xTaskCreate(vMatrizTask, "Matriz Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
     xTaskCreate(vLedRGBTask, "LED RGB Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
     xTaskCreate(vDisplayTask, "Display Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
     vTaskStartScheduler();
