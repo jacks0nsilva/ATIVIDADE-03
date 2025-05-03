@@ -28,7 +28,7 @@ ssd1306_t ssd;
 
 #define BOTAO_B 6
 
-// Delay interrompível para troca de modo imediata
+// Função essencial para troca de modo imediata
 void delay_interrompivel(int total_ms) {
     const int passo = 50;
     int elapsed = 0;
@@ -50,21 +50,21 @@ void pwm_init_buzzer(uint pin) {
 
 
 // Task que define o estado do semáforo com base no modo
+/*
+ A função delay interrompivel foi criada para permitir que o semáforo mude de estado imediatamente quando o botão A é pressionado, mesmo durante os delays de cada estado. O if (noturno) verifica se o modo noturno está ativo. Se estiver, a execução volta ao início do loop.
+*/
 void vControleTask() {
     while (true) {
         if (!noturno) {
             estado_atual = ESTADO_VERDE;
-            //vTaskDelay(pdMS_TO_TICKS(TIME_GREEN));
             delay_interrompivel(TIME_GREEN);
             if (noturno) continue;
 
             estado_atual = ESTADO_AMARELO;
-            //vTaskDelay(pdMS_TO_TICKS(TIME_YELLOW));
             delay_interrompivel(TIME_YELLOW);
             if (noturno) continue;
 
             estado_atual = ESTADO_VERMELHO;
-            //vTaskDelay(pdMS_TO_TICKS(TIME_RED));
             delay_interrompivel(TIME_RED);
             if (noturno) continue;
         } else {
@@ -129,16 +129,16 @@ void vDisplayTask() {
         ssd1306_rect(&ssd, 3, 3, 122, 60, true, false);      // Desenha um retângulo
         switch (estado_atual) {
             case ESTADO_VERDE:
-                ssd1306_draw_string(&ssd, "EM FRENTE", 8, 8);
+                ssd1306_draw_string(&ssd, "EM FRENTE!", 8, 8);
                 break;
             case ESTADO_AMARELO:
-                ssd1306_draw_string(&ssd, "ATENCAO", 8, 8);
+                ssd1306_draw_string(&ssd, "ATENCAO!", 8, 8);
                 break;
             case ESTADO_VERMELHO:
-                ssd1306_draw_string(&ssd, "PARE", 8, 8);
+                ssd1306_draw_string(&ssd, "PARE!", 8, 8);
                 break;
             case ESTADO_NOTURNO:
-                ssd1306_draw_string(&ssd, "NOTURNO", 8, 8);
+                ssd1306_draw_string(&ssd, "NOTURNO!", 8, 8);
                 break;
         }
         ssd1306_send_data(&ssd);
@@ -146,7 +146,7 @@ void vDisplayTask() {
     }
 }
 
-// Tarefa da Matriz WS2812
+// Tarefa da Matriz de LEDs 5x5
 void vMatrizTask() {
     np_init(MATRIZ_LEDS);
     np_clear();
@@ -181,7 +181,7 @@ void vMatrizTask() {
     }
 }
 
-// Tarefa do botão A (modo) e botão B (BOOTSEL)
+// Tarefa do botão A (modo noturno) e botão B (BOOTSEL)
 void vBotaoTask() {
     gpio_init(BUTTON_A);
     gpio_set_dir(BUTTON_A, GPIO_IN);
@@ -208,6 +208,7 @@ void vBotaoTask() {
     }
 }
 
+// Tarefa do buzzer 
 void vBuzzerTask(){
     pwm_init_buzzer(BUZZER_A);
 
@@ -250,12 +251,12 @@ void vBuzzerTask(){
 int main() {
     stdio_init_all();
 
-    xTaskCreate(vControleTask, "Controle", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(vLedRGBTask, "LED RGB", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(vDisplayTask, "Display", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(vMatrizTask, "Matriz", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(vBotaoTask, "Botao", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(vBuzzerTask, "Buzzer", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(vControleTask, "Controle Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(vLedRGBTask, "LED RGB Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(vDisplayTask, "Display Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(vMatrizTask, "Matriz Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(vBotaoTask, "Botao Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(vBuzzerTask, "Buzzer Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
     vTaskStartScheduler();
     panic_unsupported();
 }
