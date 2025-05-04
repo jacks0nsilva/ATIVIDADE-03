@@ -2,7 +2,6 @@
 #define DEFINICOES_H
 
 #define LED_GREEN 11
-#define LED_BLUE 12
 #define LED_RED 13
 #define BUTTON_A 5
 #define MATRIZ_LEDS 7
@@ -13,9 +12,9 @@
 #define ADRESS 0x3c
 
 
-#define TIME_GREEN 6000
+#define TIME_GREEN 8000
 #define TIME_YELLOW 3000
-#define TIME_RED 6000
+#define TIME_RED 8000
 
 
 #endif

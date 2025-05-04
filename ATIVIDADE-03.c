@@ -80,9 +80,6 @@ void vLedRGBTask() {
     gpio_set_dir(LED_GREEN, GPIO_OUT);
     gpio_init(LED_RED);
     gpio_set_dir(LED_RED, GPIO_OUT);
-    gpio_init(LED_BLUE);
-    gpio_set_dir(LED_BLUE, GPIO_OUT);
-
     while (true) {
         switch (estado_atual) {
             case ESTADO_VERDE:
@@ -129,7 +126,7 @@ void vDisplayTask() {
         ssd1306_rect(&ssd, 3, 3, 122, 60, true, false);      // Desenha um retângulo
         switch (estado_atual) {
             case ESTADO_VERDE:
-                ssd1306_draw_string(&ssd, "EM FRENTE!", 8, 8);
+                ssd1306_draw_string(&ssd, "PODE ATRAVESSAR!", 8, 8);
                 break;
             case ESTADO_AMARELO:
                 ssd1306_draw_string(&ssd, "ATENCAO!", 8, 8);
@@ -138,7 +135,7 @@ void vDisplayTask() {
                 ssd1306_draw_string(&ssd, "PARE!", 8, 8);
                 break;
             case ESTADO_NOTURNO:
-                ssd1306_draw_string(&ssd, "NOTURNO!", 8, 8);
+                ssd1306_draw_string(&ssd, "CUIDADO!", 8, 8);
                 break;
         }
         ssd1306_send_data(&ssd);
