@@ -58,9 +58,17 @@ Este projeto reforçou conhecimentos em:
 
 3. **Abra o projeto no VSCode.**
 
-4. **Instale a extensão do Raspberry Pi Pico no VSCode, se ainda não tiver.**
+4. **Altere o caminho do Kernel do FreeRTOS:**
 
-5. **Siga os passos da extensão:**
+   - No arquivo `CMakeLists.txt`, localize a linha que define o caminho do FreeRTOS e ajuste conforme necessário. Por exemplo:
+
+     ```cmake
+     set(FREERTOS_KERNEL_PATH "/caminho/para/o/seu/FreeRTOS")
+     ```
+
+5. **Instale a extensão do Raspberry Pi Pico no VSCode, se ainda não tiver.**
+
+6. **Siga os passos da extensão:**
 
    - **Clean CMake:** Limpa arquivos antigos e evita conflito de build.
    - **Compile Project:** Compila o firmware com todos os binários.
