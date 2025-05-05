@@ -80,32 +80,50 @@ void vLedRGBTask() {
     gpio_set_dir(LED_GREEN, GPIO_OUT);
     gpio_init(LED_RED);
     gpio_set_dir(LED_RED, GPIO_OUT);
+
     while (true) {
         switch (estado_atual) {
             case ESTADO_VERDE:
                 gpio_put(LED_RED, 0);
                 gpio_put(LED_GREEN, 1);
                 break;
+
             case ESTADO_AMARELO:
                 gpio_put(LED_GREEN, 1);
                 gpio_put(LED_RED, 1); // Simula amarelo
                 break;
+
             case ESTADO_VERMELHO:
                 gpio_put(LED_RED, 1);
                 gpio_put(LED_GREEN, 0);
                 break;
+
             case ESTADO_NOTURNO:
                 gpio_put(LED_GREEN, 1);
                 gpio_put(LED_RED, 1);
-                vTaskDelay(pdMS_TO_TICKS(3000));
+
+                for (int i = 0; i < 60; i++) { // 3 segundos em passos de 50ms
+                    if (estado_atual != ESTADO_NOTURNO) break;
+                    vTaskDelay(pdMS_TO_TICKS(50));
+                }
+
                 gpio_put(LED_GREEN, 0);
                 gpio_put(LED_RED, 0);
-                vTaskDelay(pdMS_TO_TICKS(3000));
+
+                for (int i = 0; i < 60; i++) {
+                    if (estado_atual != ESTADO_NOTURNO) break;
+                    vTaskDelay(pdMS_TO_TICKS(50));
+                }
+
+                /* Ambas instruções for proporcionam que a matriz de LEDs seja atualizada para o modo normal, assim que o estado for alterado. A cada 50ms é verificado se o estado atual é diferente do estado noturno durante 60 vezes (3 segundos) */
+
                 continue;
         }
+
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
+
 
 // Tarefa do Display OLED
 void vDisplayTask() {
@@ -126,7 +144,7 @@ void vDisplayTask() {
         ssd1306_rect(&ssd, 3, 3, 122, 60, true, false);      // Desenha um retângulo
         switch (estado_atual) {
             case ESTADO_VERDE:
-                ssd1306_draw_string(&ssd, "PODE ATRAVESSAR!", 8, 8);
+                ssd1306_draw_string(&ssd, "ATRAVESSE!", 8, 8);
                 break;
             case ESTADO_AMARELO:
                 ssd1306_draw_string(&ssd, "ATENCAO!", 8, 8);
@@ -169,14 +187,27 @@ void vMatrizTask() {
                 break;
             case ESTADO_NOTURNO:
                 np_set_leds(matriz, 50, 50, 0); // Amarelo
-                vTaskDelay(pdMS_TO_TICKS(3000));
+
+                for (int i = 0; i < 60; i++) { // Total de 3 segundos dividido em 50ms
+                    if (estado_atual != ESTADO_NOTURNO) break;
+                    vTaskDelay(pdMS_TO_TICKS(50));
+                }
+
                 np_set_leds(matriz, 0, 0, 0);
-                vTaskDelay(pdMS_TO_TICKS(3000));
+
+                for (int i = 0; i < 60; i++) {
+                    if (estado_atual != ESTADO_NOTURNO) break;
+                    vTaskDelay(pdMS_TO_TICKS(50));
+                }
+                /* Ambas instruções for proporcionam que a matriz de LEDs seja atualizada para o modo normal, assim que o estado for alterado. A cada 50ms é verificado se o estado atual é diferente do estado noturno durante 60 vezes (3 segundos) */
+
                 continue;
         }
+
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
+
 
 // Tarefa do botão A (modo noturno) e botão B (BOOTSEL)
 void vBotaoTask() {
