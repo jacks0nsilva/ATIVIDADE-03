@@ -26,7 +26,7 @@ volatile EstadoSemaforo estado_atual = ESTADO_VERDE;
 ssd1306_t ssd;
 
 
-#define BOTAO_B 6
+
 
 // Função essencial para troca de modo imediata
 void delay_interrompivel(int total_ms) {
@@ -39,6 +39,7 @@ void delay_interrompivel(int total_ms) {
     }
 }
 
+// Função para inicializar o buzzer
 void pwm_init_buzzer(uint pin) {
     gpio_set_function(pin, GPIO_FUNC_PWM);
     uint slice_num = pwm_gpio_to_slice_num(pin);
@@ -215,9 +216,9 @@ void vBotaoTask() {
     gpio_set_dir(BUTTON_A, GPIO_IN);
     gpio_pull_up(BUTTON_A);
 
-    gpio_init(BOTAO_B);
-    gpio_set_dir(BOTAO_B, GPIO_IN);
-    gpio_pull_up(BOTAO_B);
+    gpio_init(BUTTON_B);
+    gpio_set_dir(BUTTON_B, GPIO_IN);
+    gpio_pull_up(BUTTON_B);
 
     bool estado_anterior_a = true;
 
@@ -228,7 +229,7 @@ void vBotaoTask() {
         }
         estado_anterior_a = estado_atual_a;
 
-        if (!gpio_get(BOTAO_B)) {
+        if (!gpio_get(BUTTON_B)) {
             reset_usb_boot(0, 0);
         }
 

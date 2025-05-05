@@ -4,6 +4,7 @@
 #define LED_GREEN 11
 #define LED_RED 13
 #define BUTTON_A 5
+#define BUTTON_B 6
 #define MATRIZ_LEDS 7
 #define BUZZER_A 21 
 #define I2C_PORT i2c1
